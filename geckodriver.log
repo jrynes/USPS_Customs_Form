@@ -900,3 +900,61 @@ Exiting due to channel error.
 Exiting due to channel error.
 Exiting due to channel error.
 Exiting due to channel error.
+1642685542302	geckodriver	INFO	Listening on 127.0.0.1:53105
+1642685542829	mozrunner::runner	INFO	Running command: "/Applications/Firefox.app/Contents/MacOS/firefox-bin" "--marionette" "--remote-debugging-port" "53106" "-foreground" "-no-remote" "-profile" "/var/folders/s8/0s0fzhsn5l5bh9yxlbt23h7h0000gp/T/rust_mozprofileHOEQlD"
+2022-01-20 14:32:27.275 firefox-bin[90980:2299759] Warning: Expected min height of view: (<NSButton: 0x1278fe400>) to be less than or equal to 30 but got a height of 32.000000. This error will be logged once per view in violation.
+2022-01-20 14:32:27.276 firefox-bin[90980:2299759] Warning: Expected min height of view: (<NSButton: 0x134ad2400>) to be less than or equal to 30 but got a height of 32.000000. This error will be logged once per view in violation.
+2022-01-20 14:32:27.276 firefox-bin[90980:2299759] Warning: Expected min height of view: (<NSButton: 0x134ad5400>) to be less than or equal to 30 but got a height of 32.000000. This error will be logged once per view in violation.
+2022-01-20 14:32:27.277 firefox-bin[90980:2299759] Warning: Expected min height of view: (<NSButton: 0x112607800>) to be less than or equal to 30 but got a height of 32.000000. This error will be logged once per view in violation.
+2022-01-20 14:32:27.277 firefox-bin[90980:2299759] Warning: Expected min height of view: (<NSButton: 0x134ad2800>) to be less than or equal to 30 but got a height of 32.000000. This error will be logged once per view in violation.
+2022-01-20 14:32:27.278 firefox-bin[90980:2299759] Warning: Expected min height of view: (<NSPopoverTouchBarItemButton: 0x134ad5800>) to be less than or equal to 30 but got a height of 32.000000. This error will be logged once per view in violation.
+2022-01-20 14:32:27.278 firefox-bin[90980:2299759] Warning: Expected min height of view: (<NSPopoverTouchBarItemButton: 0x134acb800>) to be less than or equal to 30 but got a height of 32.000000. This error will be logged once per view in violation.
+DevTools listening on ws://localhost:53106/devtools/browser/292946c8-fe10-401d-bea7-77f4ffdd08f5
+1642685577403	geckodriver	INFO	Listening on 127.0.0.1:53189
+1642685577421	mozrunner::runner	INFO	Running command: "/Applications/Firefox.app/Contents/MacOS/firefox-bin" "--marionette" "--remote-debugging-port" "53190" "-foreground" "-no-remote" "-profile" "/var/folders/s8/0s0fzhsn5l5bh9yxlbt23h7h0000gp/T/rust_mozprofileSRbHkD"
+1642685577701	Marionette	INFO	Marionette enabled
+2022-01-20 14:32:58.224 firefox-bin[91018:2301042] Warning: Expected min height of view: (<NSButton: 0x12891bc00>) to be less than or equal to 30 but got a height of 32.000000. This error will be logged once per view in violation.
+2022-01-20 14:32:58.225 firefox-bin[91018:2301042] Warning: Expected min height of view: (<NSButton: 0x1336e3400>) to be less than or equal to 30 but got a height of 32.000000. This error will be logged once per view in violation.
+2022-01-20 14:32:58.225 firefox-bin[91018:2301042] Warning: Expected min height of view: (<NSButton: 0x1336e6000>) to be less than or equal to 30 but got a height of 32.000000. This error will be logged once per view in violation.
+2022-01-20 14:32:58.226 firefox-bin[91018:2301042] Warning: Expected min height of view: (<NSButton: 0x1336e9c00>) to be less than or equal to 30 but got a height of 32.000000. This error will be logged once per view in violation.
+2022-01-20 14:32:58.226 firefox-bin[91018:2301042] Warning: Expected min height of view: (<NSButton: 0x1336e5400>) to be less than or equal to 30 but got a height of 32.000000. This error will be logged once per view in violation.
+2022-01-20 14:32:58.227 firefox-bin[91018:2301042] Warning: Expected min height of view: (<NSPopoverTouchBarItemButton: 0x1336e2800>) to be less than or equal to 30 but got a height of 32.000000. This error will be logged once per view in violation.
+2022-01-20 14:32:58.228 firefox-bin[91018:2301042] Warning: Expected min height of view: (<NSPopoverTouchBarItemButton: 0x1339b3400>) to be less than or equal to 30 but got a height of 32.000000. This error will be logged once per view in violation.
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /var/folders/s8/0s0fzhsn5l5bh9yxlbt23h7h0000gp/T/rust_mozprofileSRbHkD/search.json.mozlz4", (void 0)))
+console.error: BackgroundUpdate: 
+  _reasonsToNotScheduleUpdates: Failed to check for Maintenance Service Registry Key: [Exception... "Component returned failure code: 0x80004001 (NS_ERROR_NOT_IMPLEMENTED) [nsIUpdateProcessor.getServiceRegKeyExists]"  nsresult: "0x80004001 (NS_ERROR_NOT_IMPLEMENTED)"  location: "JS frame :: resource://gre/modules/BackgroundUpdate.jsm :: _reasonsToNotScheduleUpdates :: line 243"  data: no]
+DevTools listening on ws://localhost:53190/devtools/browser/3b2e155d-ecae-4b79-8b1c-b9f6915455b0
+1642685579168	Marionette	INFO	Listening on port 53195
+1642685579268	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+
+###!!! [Child][MessageChannel] Error: (msgtype=0x5B0008,name=PHttpChannel::Msg_DeletingChannel) Channel closing: too late to send/recv, messages will be lost
+
+
+###!!! [Child][MessageChannel] Error: (msgtype=0x5B0008,name=PHttpChannel::Msg_DeletingChannel) Channel closing: too late to send/recv, messages will be lost
+
+
+###!!! [Child][MessageChannel] Error: (msgtype=0x5B0008,name=PHttpChannel::Msg_DeletingChannel) Channel closing: too late to send/recv, messages will be lost
+
+
+###!!! [Child][RunMessage] Error: Channel closing: too late to send/recv, messages will be lost
+
+
+###!!! [Child][RunMessage] Error: Channel closing: too late to send/recv, messages will be lost
+
+
+###!!! [Child][MessageChannel] Error: (msgtype=0x5B0008,name=PHttpChannel::Msg_DeletingChannel) Channel closing: too late to send/recv, messages will be lost
+
+
+###!!! [Child][RunMessage] Error: Channel closing: too late to send/recv, messages will be lost
+
+
+###!!! [Child][MessageChannel] Error: (msgtype=0x5B0008,name=PHttpChannel::Msg_DeletingChannel) Channel closing: too late to send/recv, messages will be lost
+
+
+###!!! [Child][MessageChannel] Error: (msgtype=0x5B0008,name=PHttpChannel::Msg_DeletingChannel) Channel closing: too late to send/recv, messages will be lost
+
+
+###!!! [Child][MessageChannel] Error: (msgtype=0x5B0008,name=PHttpChannel::Msg_DeletingChannel) Channel closing: too late to send/recv, messages will be lost
+
+Exiting due to channel error.
+Exiting due to channel error.

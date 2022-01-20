@@ -1,4 +1,4 @@
-Name,Street Address,City,State,Zip Code,Country,Weight in Pounds,Weight in Ounces,Box Type
-The Rynes,CMR 489 BOX 159,Stuttgart,APO AE,“09751”,-,-,-,-
-The Dees,5968 Amber Ridge Road,Haymarket,Virginia,"“20169""",USA,10,0,Large Flat Rate Box
-Kris Rynes,2375 North Revere Road,Akron,Ohio,“44333”,USA,10,0,Medium Flat Rate Box
+Address Type,Name,Street Address,City,State,Zip Code,Country,Weight in Pounds,Weight in Ounces,Box Type
+Sender,The Rynes,CMR 489 BOX 159,Stuttgart,APO AE,“09751”,-,-,-,-
+Reciever,The Dees,5968 Amber Ridge Road,Haymarket,Virginia,"“20169""",USA,10,0,Large Flat Rate Box
+Reciever,Kris Rynes,2375 North Revere Road,Akron,Ohio,“44333”,USA,10,0,Medium Flat Rate Box
