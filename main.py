@@ -4,14 +4,15 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
+
 #Import csv to read our addresses from our target spreadsheet
 import csv
+
 # Import tkinter to help create our GUI elements for the user
 import tkinter as tk
 from tkinter import filedialog as fd
 from tkinter import ttk
 import os
-
 
 # Helper function to parse the zip code contained in our CSV file
 def parseZipCode(inputText):
@@ -29,61 +30,79 @@ def waitForPageLoad(targetDriver, targetCondition, delay):
         print("Page timed out.")
     return
 
-# NOT CURRENTLY USED - Helper function to help select our package type
-# def selectPackageType(webDriver, radioGroupName, valueToFind):
-#     radioGroup = webDriver.findElements(By.name(radioGroupName))
-#     #try:
-#     for eachItem in radioGroup:
-#         if radioGroup.get(eachItem).getAttribute("note method-note").equals(valueToFind):
-#             radioGroup.get(eachItem).click()
-#             return
-#     #except:
-#         #print("Error, value not found")
+#Helper class for the check box selection function
+#Second Iteration - Use a series of checkboxes to simplify the GUI creation
+class selectRecipients_GUI(tk.Toplevel):
 
-#TODO: Add some logic here to have the user select the path where the target CSV file is located
-# Use a tree view function from tkinter to achieve this
-def selectRecipients(columnNames, rowContent):
-    root = tk.Tk()
-    root.title('Select Package Recipients:')
-    root.geometry('600x200')
+    def __init__(self, master, button_dict):
+        #Try to set title of window
+        #self.master.title("Test")
+        self.button_dict = button_dict
+        row = len(self.button_dict) + 1
+        testResult = []
 
-    # define columns
-    #columnNames = ('first_name', 'last_name', 'email')
-    #Clean our column names from our CSV file. If the header contains a space, replace it with an underscore for processing
-    cleanedColumnNames = [sub.replace(" ", "_") for sub in columnNames]
-    joinedColumnNames = ",".join(cleanedColumnNames)
+        for i, key in enumerate(self.button_dict, 1):
+            variableName = "VAR" + str(i)
+            self.button_dict[key] = tk.IntVar(name=variableName) # set all values of the dict to intvars
+            # set the variable of the checkbutton to the value of our dictionary so that our dictionary updates
+            #c = tk.Checkbutton(self, text=key, variable=self.button_dict[key],command=lambda: self.cb(self.button_dict[key]))
+            c = tk.Checkbutton(self, text=key, variable=self.button_dict[key],
+                               command=lambda: self.cb(self.button_dict[key]))
+            c.grid(row=i, sticky=tk.W)
+            testResult.append(self.button_dict[key])
 
 
 
-    tree = ttk.Treeview(root, columns=cleanedColumnNames, show='headings')
+        #proceed = tk.Button(self.root, text='Proceed', command=self.query_include)
+        proceed = tk.Button(self, text='Proceed', command=self.query_include)
+        proceed.grid(row=row, sticky=tk.W)
 
-    # define headings
-    #tree.heading('first_name', text='First Name')
-    for originalName, cleanedName in zip(columnNames, cleanedColumnNames):
-        tree.heading(cleanedName, text=originalName)
+        #quit = tk.Button(self.root, text='Quit', command=self.root.quit)
+        quit = tk.Button(self, text='Quit', command=root.quit)
+        quit.grid(row=row + 1, sticky=tk.W)
 
-    for eachRowItem in rowContent:
-        tree.insert("",tk.END,values=eachRowItem)
+    def cb(self, varItem):
+        print("Var value is: " + str(varItem.get()) + ". Var name is " + str(varItem))
 
-    tree.grid(row=0, column=0, sticky='nsew')
+    def query_include(self):
+        returnList = {}
+        for key, value in self.button_dict.items():
+            if value.get() == 1:
+                print(key, value.get())
+                returnList[key] = value
+        self.destroy()
+        return returnList
+                #A.append(key)
 
-    root.mainloop()
+    def quit_gui(self):
+        self.root.destroy()
 
+# some logic here to have the user select the path where the target CSV file is located
 fileTypes = [("CSV File", "*.csv")]
 
-def file_opener():
-    root = tk.Tk()
-    root.withdraw()
-    file = fd.askopenfilename(initialdir=os.getcwd(), filetypes=fileTypes, title="Choose a file.")
-    if file:
-        return file
-    else:
-        print ("Error - File not selected")
-        return False
+class file_opener(tk.Toplevel):
 
+    def __init__(self, master):
+        tk.Toplevel.__init__(self)
+        self.master = master
+
+    def fileOpen(self):
+        #file = fd.askopenfilename(initialdir=os.getcwd(), filetypes=fileTypes, title="Choose a file.", parent=root)
+        self.file = fd.askopenfilename(initialdir=os.getcwd(), filetypes=fileTypes, title="Choose a file.")
+        if self.file != "":
+            return self.file
+        else:
+            print ("Error - File not selected")
+            return False
+
+#Start tkinter
+root = tk.Tk()
+root.withdraw()
+
+#Debug
 #Get our target information from our CSV file before we start
-targetCSV_Path = file_opener()
-#targetCSV_Path = '/Users/Jeff/Documents/Customs_Form_v1.csv'
+topLevelTest = tk.Toplevel()
+targetCSV_Path = file_opener(topLevelTest).fileOpen()
 
 labels = []
 sendingAddress = []
@@ -104,10 +123,20 @@ with open(targetCSV_Path) as fd:
                 recipients.append(row)
             else:
                 print("Error - Duplicate addresses are in the source CSV file.")
+                
 
 # TODO: Add some logic here to present a checkbox for the user to select which people to send the package to
-checkedRecipients = selectRecipients(labels, recipients)
+#Create dictionary of values for our GUI
+button_dict = {}
+divider = ", at: "
+for eachRow in recipients:
+    strBuilder = str(eachRow[1]) + divider + str(eachRow[2])
+    button_dict[strBuilder] = 0
 
+topLevelTest = tk.Toplevel()
+gui = selectRecipients_GUI(topLevelTest, button_dict)
+
+root.mainloop()
 
 for eachRow in recipients:
     driver = webdriver.Firefox()
@@ -121,7 +150,6 @@ for eachRow in recipients:
     except TimeoutException:
         print ("Loading took too much time!")
 
-
     # How is the object being routed?
     driver.find_element_by_xpath("//input[@value='militaryToUSA']").click()
     driver.find_element_by_id("submit").click()
@@ -132,9 +160,6 @@ for eachRow in recipients:
 
     #Sender Zip Code
     senderZip = parseZipCode(sendingAddress[4])
-    #string_encode = senderZip_Base.encode("ascii", "ignore")
-    #string_decode = string_encode.decode()
-    #senderZip = string_decode
     receiverZip = parseZipCode(eachRow[4])
     driver.find_element_by_id('senderZipCode').send_keys(senderZip)
 
@@ -156,7 +181,6 @@ for eachRow in recipients:
     #$x("//div[contains(@class, 'note method-note') and (text()='Large Flat Rate Box')]/ancestor::label/input")
     boxType = eachRow[8]
     xPathQuery = "//div[contains(@class, 'note method-note') and (text()='" + boxType + "')]/ancestor::label/input\")"
-    #driver.find_element_by_xpath("//div[contains(@class, 'note method-note') and (text()='Large Flat Rate Box')]/ancestor::label/input").click()
     driver.find_element_by_xpath("//div[contains(@class, 'note method-note') and (text()='" + boxType + "')]/ancestor::label/input").click()
     driver.find_element_by_id("submit").click()
 
