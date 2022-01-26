@@ -15,6 +15,8 @@ from tkinter import filedialog as fd
 from tkinter import ttk
 import os
 
+csvInformation = []
+
 # Helper function to parse the zip code contained in our CSV file
 def parseZipCode(inputText):
     baseText = inputText.encode("ascii", "ignore")
@@ -36,6 +38,7 @@ def parseCSV(targetPath):
     labels = []
     sendingAddress = []
     recipients = []
+    output = []
 
     with open(targetPath) as fd:
         reader = csv.reader(fd)
@@ -53,7 +56,8 @@ def parseCSV(targetPath):
                 else:
                     print("Error - Duplicate addresses are in the source CSV file.")
 
-    return([labels, sendingAddress, recipients])
+    output = [labels, sendingAddress, recipients]
+    return(output)
 
 def prepareAddress(csvInformation):
     targetIndex = csvInformation[2]
@@ -75,8 +79,13 @@ def preparePackageTypes(inputDictionary):
 def main():
     root = tk.Tk()
     root.withdraw()
-    app = FileOpener(root).fileOpen()
+    #app1 = FileOpener(root).fileOpen()
+    app = FileOpener(root)
+    app.fileOpen()
     root.mainloop()
+    #testVar = app.fileTypes
+    #print(testVar)
+    print(app.data)
 
 
 # some logic here to have the user select the path where the target CSV file is located
@@ -89,17 +98,18 @@ class FileOpener(tk.Frame):
         #tk.Frame.__init__(self)
         self.master = master
         self.frame = tk.Frame(self.master)
+        self.data = ["Test"]
 
     def fileOpen(self):
         #Debug print statement below to check that our Toplevel element is being used here
         #print(self.winfo_exists(my_toplevel_name))
         fileTypes = [("CSV File", "*.csv")]
-        #file = fd.askopenfilename(initialdir=os.getcwd(), filetypes=fileTypes, title="Choose a file.", parent=root)
         file = fd.askopenfilename(initialdir=os.getcwd(), filetypes=fileTypes, title="Choose a file.")
         if file != "":
             print(file)
             recipientInformation = parseCSV(file)
             cleanedInformation = prepareAddress(recipientInformation)
+            self.data.append(cleanedInformation)
             gui = selectRecipients_GUI(self.master, cleanedInformation)
             #return file
         else:
@@ -124,7 +134,6 @@ returnVar = RecipientSelection ()
 # Using Toplevel instead of frames, to have a separate window with typical decoration
 class selectRecipients_GUI(tk.Toplevel):
 
-    #def __init__(self, master, button_dict):
     def __init__(self, master, button_dict):
         self.master = master
         tk.Toplevel.__init__(self, master)
@@ -135,51 +144,38 @@ class selectRecipients_GUI(tk.Toplevel):
         i = 1
 
         for key in self.button_dict:
-            #c = tk.Checkbutton(self, text=key, variable=button_dict[key])
             c = tk.Checkbutton(self, text=key, variable=button_dict[key])
             c.grid(row=i, sticky=tk.W)
             c.var = button_dict[key]
-            #testResult.append([self.button_dict[key], self.button_dict[key].get()])
             print([button_dict[key], button_dict[key].get()])
             i = i + 1
 
         #Proceed button
-        proceed = tk.Button(self, text='Proceed', command=self.query_include)
-        #proceed = tk.Button(self text='Proceed', command=self.query_include)
+        proceed = tk.Button(self, text='Proceed', command=lambda: self.query_include())
         proceed.grid(row=row, sticky=tk.W)
 
         #Quit button
-        quit = tk.Button(self, text='Quit', command=lambda: self.quit_gui())
+        quit = tk.Button(self, text='Quit', command=lambda: self.quit_gui()) #Add a lambda here to only run on click
         quit.grid(row=row + 1, sticky=tk.W)
 
     def cb(self, varItem):
         print("Var value is: " + str(varItem.get()) + ". Var name is " + str(varItem))
 
     def query_include(self):
-        #returnList = {}
-        #s = self.returnList
-        self.returnResult
+        #self.returnResult
         #try:
         for key, value in self.button_dict.items():
             if value.get() == 1:
                 #print(key, value.get())
                 self.returnResult[key] = value
-            self.destroy()
-        #Try to open a new window here
-        #topLevelTest_3 = tk.Toplevel()
-        #topLevelTest_3.title = "Test"
+        self.destroy()
         inputList = preparePackageTypes(self.returnResult)
-        #s = SelectPackageSize(topLevelTest_3, inputList)
-        s = SelectPackageSize(inputList)
-            #self.foo.destroy()
-            #root.destroy()
-            #return
+        s = SelectPackageSize(self.master, inputList)
         #except:
             #print("Error A")
             #root.destroy()
 
     def quit_gui(self):
-        #self.root.destroy()
         self.master.destroy()
 
 #Class to have the user select their package size from a drop-down list for each recipient
@@ -188,10 +184,11 @@ class SelectPackageSize(tk.Toplevel):
     #def __init__(self, master, inputList):
     def __init__(self, master, inputList):
         #tk.Toplevel.__init__(self, root)
-        #super().__init__(master)
+        super().__init__(master)
         #tLevel = tk.Toplevel(master)
+        self.master = master
         self.inputList = inputList
-        #row = len(self.inputList) + 1
+        row = len(self.inputList) + 1
         self.returnResult = {}
         self.packageOptions = ["Choose your own box", "Small Flat Rate Box",
                                "Medium Flat Rate Box", "Large Flat Rate Box", "APO/FPO Large Flat Rate Box",
@@ -201,20 +198,16 @@ class SelectPackageSize(tk.Toplevel):
                                "Window Flat Rate Envelope",
                                ]
 
-
         i = 1
         #Add header label with some padding to help inform the user
         headerLabel = tk.Label(self, text="Please select the package type for each recipient:", pady=3)
         headerLabel.grid(row=i, column=1)
         i= i+1
         for key, value in self.inputList.items():
-            #c = tk.Checkbutton(self, text=key, variable=button_dict[key])
             cLabel = tk.Label(self, text=key, justify=tk.LEFT)
             cLabel.grid(row=i, column=1, sticky=tk.W)
             c = tk.OptionMenu(self, value, *self.packageOptions)
             c.grid(row=i, column=2, sticky=tk.W)
-            #c.var = button_dict[key]
-            #testResult.append([self.button_dict[key], self.button_dict[key].get()])
             print([inputList[key], inputList[key].get()])
             i = i + 1
 
@@ -223,24 +216,24 @@ class SelectPackageSize(tk.Toplevel):
         proceed.grid(row=i, column=2, sticky=tk.W)
 
         #Quit button
-        #quit = tk.Button(self, text='Quit', command=root.quit)
-        #quit.grid(row=i + 1, column=2, sticky=tk.W)
+        quit = tk.Button(self, text='Quit', command=lambda: self.quit_gui()) #Add a lambda here to only run on click
+        quit.grid(row=row + 1, column=2, sticky=tk.W)
 
         def query_include(self):
             # returnList = {}
             # s = self.returnList
             self.returnResult
-            try:
-                for key, value in self.button_dict.items():
-                    if value.get() == 1:
-                        # print(key, value.get())
-                        self.returnResult[key] = value
-                self.destroy()
+            #try:
+            for key, value in self.button_dict.items():
+                if value.get() == 1:
+                    # print(key, value.get())
+                    self.returnResult[key] = value
+            self.destroy()
                 # self.foo.destroy()
                 # root.destroy()
                 # return
-            except:
-                print("Error A")
+            #except:
+            print("Error A")
                 # root.destroy()
 
     def query_include(self):
@@ -260,10 +253,13 @@ class SelectPackageSize(tk.Toplevel):
             print("Error A")
             #root.destroy()
 
+    def quit_gui(self):
+        self.master.destroy()
+
 
 #Start tkinter
 if __name__ == '__main__':
-    main()
+    app1 = main()
 
 
 ''' OLD CODE BELOW
