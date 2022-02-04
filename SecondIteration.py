@@ -1,10 +1,5 @@
 #Import statements
-#Import Selenium to interact with our target website
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
+import SeleniumQuery
 
 #Import csv to read our addresses from our target spreadsheet
 import csv
@@ -24,14 +19,6 @@ def parseZipCode(inputText):
     revisedText = revisedText.replace("\"", "")
     return revisedText
 
-# Helper function to slow down selenium and make sure that our page has loaded
-def waitForPageLoad(targetDriver, targetCondition, delay):
-    try:
-        myElem = WebDriverWait(targetDriver, delay).until(EC.presence_of_element_located((By.XPATH, targetCondition)))
-        print("Page is ready!")
-    except:
-        print("Page timed out.")
-    return
 
 #Helper function to help parse our CSV input
 def parseCSV(targetPath):
@@ -60,7 +47,7 @@ def parseCSV(targetPath):
     return(output)
 
 def prepareAddress(csvInformation):
-    targetIndex = csvInformation[2]
+    targetIndex = csvInformation[2] #The recipients as marked in our CSV file
     button_dict = {}
     divider = ", at: "
     for eachRow in targetIndex:
@@ -75,15 +62,30 @@ def preparePackageTypes(inputDictionary):
         cleanedDictionary[key] = tk.StringVar(value="Select an Option")
     return cleanedDictionary
 
+def parseRecipients(allRecipients, packageSelections):
+    output = []
+    for eachRecipient in allRecipients:
+        for key, value in packageSelections.items():
+            strBuilder = key.split(", at: ")
+            name = strBuilder[0]
+            streetAddress = strBuilder[1]
+            if eachRecipient[1] == name and eachRecipient == streetAddress:
+                eachRecipient.append(value.get())
+                output.append(eachRecipient)
+    return output
+
+
+
+
 #Helper method to start our tkinter instance
 def main():
     root = tk.Tk()
     root.withdraw()
-    #app1 = FileOpener(root).fileOpen()
     app = FileOpener(root)
     app.fileOpen()
     root.mainloop()
-    #testVar = app.fileTypes
+
+    #testVar = parseRecipients(app.recipientsAll, app.packageSelection)
     #print(testVar)
     print(app.data)
 
@@ -98,7 +100,8 @@ class FileOpener(tk.Frame):
         #tk.Frame.__init__(self)
         self.master = master
         self.frame = tk.Frame(self.master)
-        self.data = ["Test"]
+        #self.recipientsAll = [] #Check if we can remove, as we're passing the full list of addresses through
+        self.packageSelection = {}
 
     def fileOpen(self):
         #Debug print statement below to check that our Toplevel element is being used here
@@ -109,37 +112,26 @@ class FileOpener(tk.Frame):
             print(file)
             recipientInformation = parseCSV(file)
             cleanedInformation = prepareAddress(recipientInformation)
-            self.data.append(cleanedInformation)
-            gui = selectRecipients_GUI(self.master, cleanedInformation)
-            #return file
+            #self.data.append(cleanedInformation) #Debug method to check that we can append data
+            #self.recipientsAll = recipientInformation[2] #set all recipients to callable variable
+            #Pass through the recipients and package selection list to be updated later
+            gui = selectRecipients_GUI(self.master, cleanedInformation, recipientInformation, self.packageSelection)
         else:
             print ("Error - File not selected")
-            #return False
-
-''' Debug method below
-#Class to store our returned variable from the recipient selection
-class RecipientSelection():
-    def __init__ (self):
-        self.returnedVariable = None
-
-    def returnVariable (self, x):
-        self.returnedVariable = x
-
-#Call our class here
-returnVar = RecipientSelection ()
-'''
 
 
 #Class to have the user select who they want to mail a package to
 # Using Toplevel instead of frames, to have a separate window with typical decoration
 class selectRecipients_GUI(tk.Toplevel):
 
-    def __init__(self, master, button_dict):
+    def __init__(self, master, button_dict, recipientsAll, packageSelection):
         self.master = master
         tk.Toplevel.__init__(self, master)
         self.button_dict = button_dict
         row = len(self.button_dict) + 1
         self.returnResult = {}
+        self.recipientsAll = recipientsAll
+        self.packageSelection = packageSelection
 
         i = 1
 
@@ -147,7 +139,6 @@ class selectRecipients_GUI(tk.Toplevel):
             c = tk.Checkbutton(self, text=key, variable=button_dict[key])
             c.grid(row=i, sticky=tk.W)
             c.var = button_dict[key]
-            print([button_dict[key], button_dict[key].get()])
             i = i + 1
 
         #Proceed button
@@ -155,25 +146,19 @@ class selectRecipients_GUI(tk.Toplevel):
         proceed.grid(row=row, sticky=tk.W)
 
         #Quit button
-        quit = tk.Button(self, text='Quit', command=lambda: self.quit_gui()) #Add a lambda here to only run on click
+        quit = tk.Button(self, text='Quit', command=lambda: self.quit_gui()) #Add a lambda to only run on click
         quit.grid(row=row + 1, sticky=tk.W)
 
     def cb(self, varItem):
         print("Var value is: " + str(varItem.get()) + ". Var name is " + str(varItem))
 
     def query_include(self):
-        #self.returnResult
-        #try:
         for key, value in self.button_dict.items():
             if value.get() == 1:
-                #print(key, value.get())
                 self.returnResult[key] = value
         self.destroy()
         inputList = preparePackageTypes(self.returnResult)
-        s = SelectPackageSize(self.master, inputList)
-        #except:
-            #print("Error A")
-            #root.destroy()
+        s = SelectPackageSize(self.master, inputList, self.recipientsAll, self.packageSelection)
 
     def quit_gui(self):
         self.master.destroy()
@@ -181,15 +166,12 @@ class selectRecipients_GUI(tk.Toplevel):
 #Class to have the user select their package size from a drop-down list for each recipient
 class SelectPackageSize(tk.Toplevel):
 
-    #def __init__(self, master, inputList):
-    def __init__(self, master, inputList):
-        #tk.Toplevel.__init__(self, root)
+    def __init__(self, master, inputDictionary,  recipientsAll, packageSelection):
         super().__init__(master)
-        #tLevel = tk.Toplevel(master)
         self.master = master
-        self.inputList = inputList
-        row = len(self.inputList) + 1
-        self.returnResult = {}
+        self.inputDictionary = inputDictionary
+        row = len(self.inputDictionary) + 1
+        self.returnResult = []
         self.packageOptions = ["Choose your own box", "Small Flat Rate Box",
                                "Medium Flat Rate Box", "Large Flat Rate Box", "APO/FPO Large Flat Rate Box",
                                "Flat Rate Envelope",
@@ -198,17 +180,36 @@ class SelectPackageSize(tk.Toplevel):
                                "Window Flat Rate Envelope",
                                ]
 
+        self.recipientsAll = recipientsAll
+        self.packageSelection = packageSelection
+
+        #Set up a dictionary to update our package selection value on callback
+        for eachEntry in self.inputDictionary.keys():
+            dictionaryBuilder = {}
+            strBuilder = eachEntry.split(", at: ")
+            addressName = strBuilder[0]
+            addressStreet = strBuilder[1]
+            packageSize = "default"
+            dictionaryBuilder["Name"] = addressName
+            dictionaryBuilder["Street Address"] = addressStreet
+            dictionaryBuilder["Package Size"] = packageSize
+            self.returnResult.append(dictionaryBuilder)
+
+        # Function to help update our output dictionary when the user makes a dropdown menu selection
+        def callback(event):
+            print(event)
+
         i = 1
         #Add header label with some padding to help inform the user
         headerLabel = tk.Label(self, text="Please select the package type for each recipient:", pady=3)
         headerLabel.grid(row=i, column=1)
         i= i+1
-        for key, value in self.inputList.items():
+        for key, value in self.inputDictionary.items():
             cLabel = tk.Label(self, text=key, justify=tk.LEFT)
             cLabel.grid(row=i, column=1, sticky=tk.W)
-            c = tk.OptionMenu(self, value, *self.packageOptions)
+            c = tk.OptionMenu(self, value, *self.packageOptions, command=callback)
             c.grid(row=i, column=2, sticky=tk.W)
-            print([inputList[key], inputList[key].get()])
+            print([inputDictionary[key], inputDictionary[key].get()])
             i = i + 1
 
         #Proceed button
@@ -219,39 +220,18 @@ class SelectPackageSize(tk.Toplevel):
         quit = tk.Button(self, text='Quit', command=lambda: self.quit_gui()) #Add a lambda here to only run on click
         quit.grid(row=row + 1, column=2, sticky=tk.W)
 
-        def query_include(self):
-            # returnList = {}
-            # s = self.returnList
-            self.returnResult
-            #try:
-            for key, value in self.button_dict.items():
-                if value.get() == 1:
-                    # print(key, value.get())
-                    self.returnResult[key] = value
-            self.destroy()
-                # self.foo.destroy()
-                # root.destroy()
-                # return
-            #except:
-            print("Error A")
-                # root.destroy()
-
     def query_include(self):
-        #returnList = {}
-        #s = self.returnList
-        self.returnResult
-        try:
-            for key, value in self.button_dict.items():
-                if value.get() == 1:
-                    #print(key, value.get())
-                    self.returnResult[key] = value
-            self.destroy()
-            #self.foo.destroy()
-            #root.destroy()
-            #return
-        except:
-            print("Error A")
-            #root.destroy()
+        for key, value in self.inputDictionary.items():
+            if value.get() != "Select an Option":
+                #self.returnResult[key] = value
+                print([key, value.get()])
+                self.packageSelection[key] = value
+        # Close the window
+        self.destroy()
+        #Call Selenium Here
+        SeleniumQuery.sQuery(self.recipientsAll, self.inputDictionary)
+
+        #self.quit_gui()
 
     def quit_gui(self):
         self.master.destroy()
@@ -260,43 +240,3 @@ class SelectPackageSize(tk.Toplevel):
 #Start tkinter
 if __name__ == '__main__':
     app1 = main()
-
-
-''' OLD CODE BELOW
-#root = tk.Tk()
-#Hide the root window, as we're using Frames and Toplevel elements
-#root.withdraw()
-
-#Get our target information from our CSV file as we start
-#Try creating a frame instead of a Toplevel for the file dialog
-#topLevelTest = tk.Frame(root)
-#targetCSV_Path = FileOpener(topLevelTest).fileOpen()
-
-#Parse our CSV file
-#recipientInformation = parseCSV(targetCSV_Path)
-#cleanedInformation = prepareAddress(recipientInformation)
-
-#Call our class to have the user select who to mail to
-#topLevelTest_2 = tk.Frame(root)
-#gui = selectRecipients_GUI(topLevelTest_2, cleanedInformation)
-#gui = selectRecipients_GUI(cleanedInformation)
-#testVal = gui.returnResult
-#print(testVal)
-
-#Align our output from the previous function before selecting target package type
-#inputList = preparePackageTypes(testVal)
-
-#Create new Toplevel element to have user select package type for each recipient
-#topLevelTest_3 = tk.Frame(root)
-#gui_3 = SelectPackageSize(topLevelTest_3, inputList)
-
-
-
-#----Mainloop keeps forms updated and listens for user input--
-#root.mainloop()
-
-#print(testVal)
-
-#print(inputList)
-
-'''
