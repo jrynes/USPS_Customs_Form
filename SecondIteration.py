@@ -59,7 +59,7 @@ def preparePackageTypes(inputDictionary):
     cleanedDictionary = {}
     for key in inputDictionary.keys():
         #keyVal = inputDictionary[key]
-        cleanedDictionary[key] = tk.StringVar(value="Select an Option")
+        cleanedDictionary[key] = [tk.StringVar(value="Select an Option"), tk.StringVar(value="Lbs"), tk.StringVar(value="Oz")]
     return cleanedDictionary
 
 def parseRecipients(allRecipients, packageSelections):
@@ -73,7 +73,6 @@ def parseRecipients(allRecipients, packageSelections):
                 eachRecipient.append(value.get())
                 output.append(eachRecipient)
     return output
-
 
 
 
@@ -184,6 +183,8 @@ class SelectPackageSize(tk.Toplevel):
         self.packageSelection = packageSelection
 
         #Set up a dictionary to update our package selection value on callback
+        #TODO Check if we can remove the code below
+        '''
         for eachEntry in self.inputDictionary.keys():
             dictionaryBuilder = {}
             strBuilder = eachEntry.split(", at: ")
@@ -194,42 +195,66 @@ class SelectPackageSize(tk.Toplevel):
             dictionaryBuilder["Street Address"] = addressStreet
             dictionaryBuilder["Package Size"] = packageSize
             self.returnResult.append(dictionaryBuilder)
+        '''
 
         # Function to help update our output dictionary when the user makes a dropdown menu selection
         def callback(event):
             print(event)
 
         i = 1
+        headerLabelFormatting = ("Arial", 14, "bold")
         #Add header label with some padding to help inform the user
-        headerLabel = tk.Label(self, text="Please select the package type for each recipient:", pady=3)
+        headerLabel = tk.Label(self, text="Please select the package type for each recipient:", pady=3, font=headerLabelFormatting)
         headerLabel.grid(row=i, column=1)
+        #Add header label for package weight in pounds and ounces
+        headerLabel_Pounds = tk.Label(self, text="Package Weight: Pounds", justify=tk.LEFT, pady=3, font=headerLabelFormatting)
+        headerLabel_Pounds.grid(row=i, column=3)
+        headerLabel_Ounces = tk.Label(self, text="Ounces", pady=3, font=headerLabelFormatting)
+        headerLabel_Ounces.grid(row=i, column=4)
+
         i= i+1
         for key, value in self.inputDictionary.items():
+            #Separate tkinter variables in the dictionary value
+            packageVar = value[0]
+            weight_LbsVar = value[1]
+            weight_OzVar = value[2]
+            #Create label for the recipients
             cLabel = tk.Label(self, text=key, justify=tk.LEFT)
             cLabel.grid(row=i, column=1, sticky=tk.W)
-            c = tk.OptionMenu(self, value, *self.packageOptions, command=callback)
-            c.grid(row=i, column=2, sticky=tk.W)
-            print([inputDictionary[key], inputDictionary[key].get()])
+            #Create dropdown menu to select the package type
+            c = tk.OptionMenu(self, packageVar, *self.packageOptions, command=callback)
+            #Set width of the OptionMenu
+            c.config(width=20)
+            c.grid(row=i, column=2)
+            #Add text input box for package weight in pounds and ounces
+            cInput_Pounds = tk.Entry(self, textvariable=weight_LbsVar)
+            cInput_Pounds.grid(row=i, column=3)
+            cInput_Ounces = tk.Entry(self, textvariable=weight_OzVar)
+            cInput_Ounces.grid(row=i, column=4)
+            print([inputDictionary[key], packageVar.get(), weight_LbsVar.get(), weight_OzVar.get()])
             i = i + 1
 
         #Proceed button
         proceed = tk.Button(self, text='Proceed', command=self.query_include)
-        proceed.grid(row=i, column=2, sticky=tk.W)
+        proceed.grid(row=i, column=4, sticky=tk.W)
 
         #Quit button
         quit = tk.Button(self, text='Quit', command=lambda: self.quit_gui()) #Add a lambda here to only run on click
-        quit.grid(row=row + 1, column=2, sticky=tk.W)
+        quit.grid(row=i + 1, column=4, sticky=tk.W)
 
     def query_include(self):
+        cleanedDictionary = {}
+        #TODO add check here to make sure that all the values have been set for the inputs
+        #Check dropdown
+        #Check that input boxes don't have default values, and they are numbers only
         for key, value in self.inputDictionary.items():
-            if value.get() != "Select an Option":
-                #self.returnResult[key] = value
-                print([key, value.get()])
+            if value[0].get() != "Select an Option":
                 self.packageSelection[key] = value
+                cleanedDictionary[key] = [val.get() for val in value]
         # Close the window
         self.destroy()
         #Call Selenium Here
-        SeleniumQuery.sQuery(self.recipientsAll, self.inputDictionary)
+        SeleniumQuery.sQuery(self.recipientsAll, cleanedDictionary)
 
         #self.quit_gui()
 
