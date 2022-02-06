@@ -3,3 +3,4 @@ venv/*
 .DS_Store
 .numbers
 GeckoDriver*.log
+jd_power_info.numbers
