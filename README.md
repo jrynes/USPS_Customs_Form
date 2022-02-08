@@ -1,4 +1,4 @@
-[![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
+[![made-with-python](https://img.shields.io/badge/MADE%20WITH-PYTHON-blue?style=for-the-badge&logo=PYTHON)](https://www.python.org/)
 
 # USPS Customs Form
 A Python script using Selenium and tkinter to batch-create USPS customs shipping forms.
