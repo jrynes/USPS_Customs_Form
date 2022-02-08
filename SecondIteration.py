@@ -59,7 +59,8 @@ def preparePackageTypes(inputDictionary):
     cleanedDictionary = {}
     for key in inputDictionary.keys():
         #keyVal = inputDictionary[key]
-        cleanedDictionary[key] = [tk.StringVar(value="Select an Option"), tk.StringVar(value="Lbs"), tk.StringVar(value="Oz")]
+        cleanedDictionary[key] = [tk.StringVar(value="Select an Option"), tk.StringVar(value="Lbs"),
+                                  tk.StringVar(value="Oz"), tk.StringVar(value="Contents")]
     return cleanedDictionary
 
 def parseRecipients(allRecipients, packageSelections):
@@ -134,6 +135,13 @@ class selectRecipients_GUI(tk.Toplevel):
 
         i = 1
 
+        #Add some instructions to the user here
+        headerLabelFormatting = ("Arial", 14, "bold")
+        headerLabel = tk.Label(self, text="Please select your package recipients:", pady=3, font=headerLabelFormatting,
+                               justify=tk.LEFT)
+        headerLabel.grid(row=i, column=0)
+        i = i+1
+
         for key in self.button_dict:
             c = tk.Checkbutton(self, text=key, variable=button_dict[key])
             c.grid(row=i, sticky=tk.W)
@@ -142,11 +150,11 @@ class selectRecipients_GUI(tk.Toplevel):
 
         #Proceed button
         proceed = tk.Button(self, text='Proceed', command=lambda: self.query_include())
-        proceed.grid(row=row, sticky=tk.W)
+        proceed.grid(row=i, sticky=tk.W)
 
         #Quit button
         quit = tk.Button(self, text='Quit', command=lambda: self.quit_gui()) #Add a lambda to only run on click
-        quit.grid(row=row + 1, sticky=tk.W)
+        quit.grid(row=i + 1, sticky=tk.W)
 
     def cb(self, varItem):
         print("Var value is: " + str(varItem.get()) + ". Var name is " + str(varItem))
@@ -211,6 +219,10 @@ class SelectPackageSize(tk.Toplevel):
         headerLabel_Pounds.grid(row=i, column=3)
         headerLabel_Ounces = tk.Label(self, text="Ounces", pady=3, font=headerLabelFormatting)
         headerLabel_Ounces.grid(row=i, column=4)
+        #Add header label for package contents description
+        headerLabel_Description = tk.Label(self, text="Package Contents", justify=tk.LEFT, pady=3, font=headerLabelFormatting)
+        headerLabel_Description.grid(row=i, column=5)
+
 
         i= i+1
         for key, value in self.inputDictionary.items():
@@ -218,6 +230,7 @@ class SelectPackageSize(tk.Toplevel):
             packageVar = value[0]
             weight_LbsVar = value[1]
             weight_OzVar = value[2]
+            packageContents = value[3]
             #Create label for the recipients
             cLabel = tk.Label(self, text=key, justify=tk.LEFT)
             cLabel.grid(row=i, column=1, sticky=tk.W)
@@ -231,7 +244,10 @@ class SelectPackageSize(tk.Toplevel):
             cInput_Pounds.grid(row=i, column=3)
             cInput_Ounces = tk.Entry(self, textvariable=weight_OzVar)
             cInput_Ounces.grid(row=i, column=4)
-            print([inputDictionary[key], packageVar.get(), weight_LbsVar.get(), weight_OzVar.get()])
+            #Add text input for package contents description
+            cInput_Description = tk.Entry(self, textvariable=packageContents)
+            cInput_Description.grid(row=i, column=5)
+            print([inputDictionary[key], packageVar.get(), weight_LbsVar.get(), weight_OzVar.get(), cInput_Description.get()])
             i = i + 1
 
         #Proceed button
@@ -256,7 +272,7 @@ class SelectPackageSize(tk.Toplevel):
         #Call Selenium Here
         SeleniumQuery.sQuery(self.recipientsAll, cleanedDictionary)
 
-        #self.quit_gui()
+        self.quit_gui()
 
     def quit_gui(self):
         self.master.destroy()
