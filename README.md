@@ -1,7 +1,7 @@
 # USPS Customs Form
 A Python script using Selenium to batch-create USPS customs shipping forms.
 
-##Project Description
+## Project Description
 When mailing multiple packages, navigating the USPS customs form creation web pages becomes a time-intensive task.
 
 To help streamline the process, this script allows the user to select multiple recipients and create USPS customs forms in a batch method.
