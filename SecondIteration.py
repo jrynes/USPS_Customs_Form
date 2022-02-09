@@ -1,13 +1,10 @@
-#Import statements
+# Import statements
 import SeleniumQuery
-
-#Import csv to read our addresses from our target spreadsheet
+# Import csv to read our addresses from our target spreadsheet
 import csv
-
 # Import tkinter to help create our GUI elements for the user
 import tkinter as tk
 from tkinter import filedialog as fd
-from tkinter import ttk
 import os
 
 csvInformation = []
@@ -18,7 +15,6 @@ def parseZipCode(inputText):
     revisedText = baseText.decode()
     revisedText = revisedText.replace("\"", "")
     return revisedText
-
 
 #Helper function to help parse our CSV input
 def parseCSV(targetPath):
@@ -37,7 +33,7 @@ def parseCSV(targetPath):
                     sendingAddress = row
                 else:
                     print("Error - Two rows are marked as the package sender.")
-            elif row[0] == "Reciever":
+            elif row[0] == "Receiver":
                 if row not in recipients:
                     recipients.append(row)
                 else:
@@ -75,9 +71,7 @@ def parseRecipients(allRecipients, packageSelections):
                 output.append(eachRecipient)
     return output
 
-
-
-#Helper method to start our tkinter instance
+# Helper method to start our tkinter instance
 def main():
     root = tk.Tk()
     root.withdraw()
@@ -85,42 +79,29 @@ def main():
     app.fileOpen()
     root.mainloop()
 
-    #testVar = parseRecipients(app.recipientsAll, app.packageSelection)
-    #print(testVar)
-    print(app.data)
-
-
 # some logic here to have the user select the path where the target CSV file is located
 # Using Frame instead of Toplevel, to have a separate window without typical decoration
 #class FileOpener(tk.Toplevel):
 class FileOpener(tk.Frame):
 
     def __init__(self, master):
-        #tk.Toplevel.__init__(self)
-        #tk.Frame.__init__(self)
         self.master = master
         self.frame = tk.Frame(self.master)
-        #self.recipientsAll = [] #Check if we can remove, as we're passing the full list of addresses through
         self.packageSelection = {}
 
     def fileOpen(self):
-        #Debug print statement below to check that our Toplevel element is being used here
-        #print(self.winfo_exists(my_toplevel_name))
         fileTypes = [("CSV File", "*.csv")]
         file = fd.askopenfilename(initialdir=os.getcwd(), filetypes=fileTypes, title="Choose a file.")
         if file != "":
             print(file)
             recipientInformation = parseCSV(file)
             cleanedInformation = prepareAddress(recipientInformation)
-            #self.data.append(cleanedInformation) #Debug method to check that we can append data
-            #self.recipientsAll = recipientInformation[2] #set all recipients to callable variable
             #Pass through the recipients and package selection list to be updated later
             gui = selectRecipients_GUI(self.master, cleanedInformation, recipientInformation, self.packageSelection)
         else:
             print ("Error - File not selected")
 
-
-#Class to have the user select who they want to mail a package to
+# Class to have the user select who they want to mail a package to
 # Using Toplevel instead of frames, to have a separate window with typical decoration
 class selectRecipients_GUI(tk.Toplevel):
 
@@ -133,7 +114,10 @@ class selectRecipients_GUI(tk.Toplevel):
         self.recipientsAll = recipientsAll
         self.packageSelection = packageSelection
 
-        i = 1
+        i = 1 #Counter to track our rows in the GUI
+
+        #Add formatting to our Toplevel component
+        self.title("Select your package recipients")
 
         #Add some instructions to the user here
         headerLabelFormatting = ("Arial", 14, "bold")
@@ -170,7 +154,7 @@ class selectRecipients_GUI(tk.Toplevel):
     def quit_gui(self):
         self.master.destroy()
 
-#Class to have the user select their package size from a drop-down list for each recipient
+# Class to have the user select their package size from a drop-down list for each recipient
 class SelectPackageSize(tk.Toplevel):
 
     def __init__(self, master, inputDictionary,  recipientsAll, packageSelection):
@@ -190,20 +174,8 @@ class SelectPackageSize(tk.Toplevel):
         self.recipientsAll = recipientsAll
         self.packageSelection = packageSelection
 
-        #Set up a dictionary to update our package selection value on callback
-        #TODO Check if we can remove the code below
-        '''
-        for eachEntry in self.inputDictionary.keys():
-            dictionaryBuilder = {}
-            strBuilder = eachEntry.split(", at: ")
-            addressName = strBuilder[0]
-            addressStreet = strBuilder[1]
-            packageSize = "default"
-            dictionaryBuilder["Name"] = addressName
-            dictionaryBuilder["Street Address"] = addressStreet
-            dictionaryBuilder["Package Size"] = packageSize
-            self.returnResult.append(dictionaryBuilder)
-        '''
+        #Add formatting to our Toplevel component
+        self.title("Modify your package attributes")
 
         # Function to help update our output dictionary when the user makes a dropdown menu selection
         def callback(event):
@@ -223,8 +195,8 @@ class SelectPackageSize(tk.Toplevel):
         headerLabel_Description = tk.Label(self, text="Package Contents", justify=tk.LEFT, pady=3, font=headerLabelFormatting)
         headerLabel_Description.grid(row=i, column=5)
 
+        i= i+1 #Counter to increment our rows in the GUI
 
-        i= i+1
         for key, value in self.inputDictionary.items():
             #Separate tkinter variables in the dictionary value
             packageVar = value[0]
@@ -277,7 +249,6 @@ class SelectPackageSize(tk.Toplevel):
     def quit_gui(self):
         self.master.destroy()
 
-
-#Start tkinter
+# Start tkinter
 if __name__ == '__main__':
     app1 = main()
