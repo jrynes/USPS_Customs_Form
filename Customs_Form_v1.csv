@@ -1,3 +1,4 @@
 Address Type,Name,Street Address,City,State,Zip Code,Country
 Sender,Test Name,Test Address,TestTown,TestState,“01234”,USA
 Receiver,Test Name,Test Address,TestTown,TestState,“01234”,USA
+Receiver,Test Name,Test Address,TestTown,TestState,“01234”,USA
