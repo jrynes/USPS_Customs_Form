@@ -1,18 +1,13 @@
-#Import Selenium to interact with our target website
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
-
-#Import csv to read our addresses from our target spreadsheet
+# Import statements
+import SeleniumQuery
+# Import csv to read our addresses from our target spreadsheet
 import csv
-
 # Import tkinter to help create our GUI elements for the user
 import tkinter as tk
 from tkinter import filedialog as fd
-from tkinter import ttk
 import os
+
+csvInformation = []
 
 # Helper function to parse the zip code contained in our CSV file
 def parseZipCode(inputText):
@@ -21,191 +16,239 @@ def parseZipCode(inputText):
     revisedText = revisedText.replace("\"", "")
     return revisedText
 
-# Helper function to slow down selenium and make sure that our page has loaded
-def waitForPageLoad(targetDriver, targetCondition, delay):
-    try:
-        myElem = WebDriverWait(targetDriver, delay).until(EC.presence_of_element_located((By.XPATH, targetCondition)))
-        print("Page is ready!")
-    except:
-        print("Page timed out.")
-    return
+#Helper function to help parse our CSV input
+def parseCSV(targetPath):
+    labels = []
+    sendingAddress = []
+    recipients = []
+    output = []
 
-#Helper class for the check box selection function
-#Second Iteration - Use a series of checkboxes to simplify the GUI creation
+    with open(targetPath) as fd:
+        reader = csv.reader(fd)
+        for idx, row in enumerate(reader):
+            if idx == 0:
+                labels = row
+            elif row[0] == "Sender":
+                if len(sendingAddress) == 0:
+                    sendingAddress = row
+                else:
+                    print("Error - Two rows are marked as the package sender.")
+            elif row[0] == "Receiver":
+                if row not in recipients:
+                    recipients.append(row)
+                else:
+                    print("Error - Duplicate addresses are in the source CSV file.")
+
+    output = [labels, sendingAddress, recipients]
+    return(output)
+
+def prepareAddress(csvInformation):
+    targetIndex = csvInformation[2] #The recipients as marked in our CSV file
+    button_dict = {}
+    divider = ", at: "
+    for eachRow in targetIndex:
+        strBuilder = str(eachRow[1]) + divider + str(eachRow[2])
+        button_dict[strBuilder] = tk.IntVar(name=strBuilder)
+    return button_dict
+
+def preparePackageTypes(inputDictionary):
+    cleanedDictionary = {}
+    for key in inputDictionary.keys():
+        #keyVal = inputDictionary[key]
+        cleanedDictionary[key] = [tk.StringVar(value="Select an Option"), tk.StringVar(value="Lbs"),
+                                  tk.StringVar(value="Oz"), tk.StringVar(value="Contents")]
+    return cleanedDictionary
+
+def parseRecipients(allRecipients, packageSelections):
+    output = []
+    for eachRecipient in allRecipients:
+        for key, value in packageSelections.items():
+            strBuilder = key.split(", at: ")
+            name = strBuilder[0]
+            streetAddress = strBuilder[1]
+            if eachRecipient[1] == name and eachRecipient == streetAddress:
+                eachRecipient.append(value.get())
+                output.append(eachRecipient)
+    return output
+
+# Helper method to start our tkinter instance
+def main():
+    root = tk.Tk()
+    root.withdraw()
+    app = FileOpener(root)
+    app.fileOpen()
+    root.mainloop()
+
+# some logic here to have the user select the path where the target CSV file is located
+# Using Frame instead of Toplevel, to have a separate window without typical decoration
+#class FileOpener(tk.Toplevel):
+class FileOpener(tk.Frame):
+
+    def __init__(self, master):
+        self.master = master
+        self.frame = tk.Frame(self.master)
+        self.packageSelection = {}
+
+    def fileOpen(self):
+        fileTypes = [("CSV File", "*.csv")]
+        file = fd.askopenfilename(initialdir=os.getcwd(), filetypes=fileTypes, title="Choose a file.")
+        if file != "":
+            print(file)
+            recipientInformation = parseCSV(file)
+            cleanedInformation = prepareAddress(recipientInformation)
+            #Pass through the recipients and package selection list to be updated later
+            gui = selectRecipients_GUI(self.master, cleanedInformation, recipientInformation, self.packageSelection)
+        else:
+            print ("Error - File not selected")
+
+# Class to have the user select who they want to mail a package to
+# Using Toplevel instead of frames, to have a separate window with typical decoration
 class selectRecipients_GUI(tk.Toplevel):
 
-    def __init__(self, master, button_dict):
-        #Try to set title of window
-        #self.master.title("Test")
+    def __init__(self, master, button_dict, recipientsAll, packageSelection):
+        self.master = master
+        tk.Toplevel.__init__(self, master)
         self.button_dict = button_dict
         row = len(self.button_dict) + 1
-        testResult = []
+        self.returnResult = {}
+        self.recipientsAll = recipientsAll
+        self.packageSelection = packageSelection
 
-        for i, key in enumerate(self.button_dict, 1):
-            variableName = "VAR" + str(i)
-            self.button_dict[key] = tk.IntVar(name=variableName) # set all values of the dict to intvars
-            # set the variable of the checkbutton to the value of our dictionary so that our dictionary updates
-            #c = tk.Checkbutton(self, text=key, variable=self.button_dict[key],command=lambda: self.cb(self.button_dict[key]))
-            c = tk.Checkbutton(self, text=key, variable=self.button_dict[key],
-                               command=lambda: self.cb(self.button_dict[key]))
+        i = 1 #Counter to track our rows in the GUI
+
+        #Add formatting to our Toplevel component
+        self.title("Select your package recipients")
+
+        #Add some instructions to the user here
+        headerLabelFormatting = ("Arial", 14, "bold")
+        headerLabel = tk.Label(self, text="Please select your package recipients:", pady=3, font=headerLabelFormatting,
+                               justify=tk.LEFT)
+        headerLabel.grid(row=i, column=0)
+        i = i+1
+
+        for key in self.button_dict:
+            c = tk.Checkbutton(self, text=key, variable=button_dict[key])
             c.grid(row=i, sticky=tk.W)
-            testResult.append(self.button_dict[key])
+            c.var = button_dict[key]
+            i = i + 1
 
+        #Proceed button
+        proceed = tk.Button(self, text='Proceed', command=lambda: self.query_include())
+        proceed.grid(row=i, sticky=tk.W)
 
-
-        #proceed = tk.Button(self.root, text='Proceed', command=self.query_include)
-        proceed = tk.Button(self, text='Proceed', command=self.query_include)
-        proceed.grid(row=row, sticky=tk.W)
-
-        #quit = tk.Button(self.root, text='Quit', command=self.root.quit)
-        quit = tk.Button(self, text='Quit', command=root.quit)
-        quit.grid(row=row + 1, sticky=tk.W)
+        #Quit button
+        quit = tk.Button(self, text='Quit', command=lambda: self.quit_gui()) #Add a lambda to only run on click
+        quit.grid(row=i + 1, sticky=tk.W)
 
     def cb(self, varItem):
         print("Var value is: " + str(varItem.get()) + ". Var name is " + str(varItem))
 
     def query_include(self):
-        returnList = {}
         for key, value in self.button_dict.items():
             if value.get() == 1:
-                print(key, value.get())
-                returnList[key] = value
+                self.returnResult[key] = value
         self.destroy()
-        return returnList
-                #A.append(key)
+        inputList = preparePackageTypes(self.returnResult)
+        s = SelectPackageSize(self.master, inputList, self.recipientsAll, self.packageSelection)
 
     def quit_gui(self):
-        self.root.destroy()
+        self.master.destroy()
 
-# some logic here to have the user select the path where the target CSV file is located
-fileTypes = [("CSV File", "*.csv")]
+# Class to have the user select their package size from a drop-down list for each recipient
+class SelectPackageSize(tk.Toplevel):
 
-class file_opener(tk.Toplevel):
-
-    def __init__(self, master):
-        tk.Toplevel.__init__(self)
+    def __init__(self, master, inputDictionary,  recipientsAll, packageSelection):
+        super().__init__(master)
         self.master = master
+        self.inputDictionary = inputDictionary
+        row = len(self.inputDictionary) + 1
+        self.returnResult = []
+        self.packageOptions = ["Choose your own box", "Small Flat Rate Box",
+                               "Medium Flat Rate Box", "Large Flat Rate Box", "APO/FPO Large Flat Rate Box",
+                               "Flat Rate Envelope",
+                               "Legal Flat Rate Envelope", "Padded Flat Rate Envelope",
+                               "Gift Card Flat Rate Envelope", "Small Flat Rate Envelope",
+                               "Window Flat Rate Envelope",
+                               ]
 
-    def fileOpen(self):
-        #file = fd.askopenfilename(initialdir=os.getcwd(), filetypes=fileTypes, title="Choose a file.", parent=root)
-        self.file = fd.askopenfilename(initialdir=os.getcwd(), filetypes=fileTypes, title="Choose a file.")
-        if self.file != "":
-            return self.file
-        else:
-            print ("Error - File not selected")
-            return False
+        self.recipientsAll = recipientsAll
+        self.packageSelection = packageSelection
 
-#Start tkinter
-root = tk.Tk()
-root.withdraw()
+        #Add formatting to our Toplevel component
+        self.title("Modify your package attributes")
 
-#Debug
-#Get our target information from our CSV file before we start
-topLevelTest = tk.Toplevel()
-targetCSV_Path = file_opener(topLevelTest).fileOpen()
+        # Function to help update our output dictionary when the user makes a dropdown menu selection
+        def callback(event):
+            print(event)
 
-labels = []
-sendingAddress = []
-recipients = []
+        i = 1
+        headerLabelFormatting = ("Arial", 14, "bold")
+        #Add header label with some padding to help inform the user
+        headerLabel = tk.Label(self, text="Please select the package type for each recipient:", pady=3, font=headerLabelFormatting)
+        headerLabel.grid(row=i, column=1)
+        #Add header label for package weight in pounds and ounces
+        headerLabel_Pounds = tk.Label(self, text="Package Weight: Pounds", justify=tk.LEFT, pady=3, font=headerLabelFormatting)
+        headerLabel_Pounds.grid(row=i, column=3)
+        headerLabel_Ounces = tk.Label(self, text="Ounces", pady=3, font=headerLabelFormatting)
+        headerLabel_Ounces.grid(row=i, column=4)
+        #Add header label for package contents description
+        headerLabel_Description = tk.Label(self, text="Package Contents", justify=tk.LEFT, pady=3, font=headerLabelFormatting)
+        headerLabel_Description.grid(row=i, column=5)
 
-with open(targetCSV_Path) as fd:
-    reader = csv.reader(fd)
-    for idx, row in enumerate(reader):
-        if idx == 0:
-            labels = row
-        elif row[0] == "Sender":
-            if len(sendingAddress) == 0:
-                sendingAddress = row
-            else:
-                print("Error - Two rows are marked as the package sender.")
-        elif row[0] == "Reciever":
-            if row not in recipients:
-                recipients.append(row)
-            else:
-                print("Error - Duplicate addresses are in the source CSV file.")
-                
+        i= i+1 #Counter to increment our rows in the GUI
 
-# TODO: Add some logic here to present a checkbox for the user to select which people to send the package to
-#Create dictionary of values for our GUI
-button_dict = {}
-divider = ", at: "
-for eachRow in recipients:
-    strBuilder = str(eachRow[1]) + divider + str(eachRow[2])
-    button_dict[strBuilder] = 0
+        for key, value in self.inputDictionary.items():
+            #Separate tkinter variables in the dictionary value
+            packageVar = value[0]
+            weight_LbsVar = value[1]
+            weight_OzVar = value[2]
+            packageContents = value[3]
+            #Create label for the recipients
+            cLabel = tk.Label(self, text=key, justify=tk.LEFT)
+            cLabel.grid(row=i, column=1, sticky=tk.W)
+            #Create dropdown menu to select the package type
+            c = tk.OptionMenu(self, packageVar, *self.packageOptions, command=callback)
+            #Set width of the OptionMenu
+            c.config(width=20)
+            c.grid(row=i, column=2)
+            #Add text input box for package weight in pounds and ounces
+            cInput_Pounds = tk.Entry(self, textvariable=weight_LbsVar)
+            cInput_Pounds.grid(row=i, column=3)
+            cInput_Ounces = tk.Entry(self, textvariable=weight_OzVar)
+            cInput_Ounces.grid(row=i, column=4)
+            #Add text input for package contents description
+            cInput_Description = tk.Entry(self, textvariable=packageContents)
+            cInput_Description.grid(row=i, column=5)
+            print([inputDictionary[key], packageVar.get(), weight_LbsVar.get(), weight_OzVar.get(), cInput_Description.get()])
+            i = i + 1
 
-topLevelTest = tk.Toplevel()
-gui = selectRecipients_GUI(topLevelTest, button_dict)
+        #Proceed button
+        proceed = tk.Button(self, text='Proceed', command=self.query_include)
+        proceed.grid(row=i, column=4, sticky=tk.W)
 
-root.mainloop()
+        #Quit button
+        quit = tk.Button(self, text='Quit', command=lambda: self.quit_gui()) #Add a lambda here to only run on click
+        quit.grid(row=i + 1, column=4, sticky=tk.W)
 
-for eachRow in recipients:
-    driver = webdriver.Firefox()
-    driver.get("https://cfo.usps.com/flow-type")
-    # Add delay of 10 seconds to ensure that the target page opens
-    delay = 10  # seconds
-    try:
-        # myElem = WebDriverWait(driver, delay).until(EC.presence_of_element_located((By.XPATH, "//input[@value='militaryToUSA']")))
-        myElem = waitForPageLoad(driver, "//input[@value='militaryToUSA']", delay)
-        print ("Page is ready!")
-    except TimeoutException:
-        print ("Loading took too much time!")
+    def query_include(self):
+        cleanedDictionary = {}
+        #TODO add check here to make sure that all the values have been set for the inputs
+        #Check dropdown
+        #Check that input boxes don't have default values, and they are numbers only
+        for key, value in self.inputDictionary.items():
+            if value[0].get() != "Select an Option":
+                self.packageSelection[key] = value
+                cleanedDictionary[key] = [val.get() for val in value]
+        # Close the window
+        self.destroy()
+        #Call Selenium Here
+        SeleniumQuery.sQuery(self.recipientsAll, cleanedDictionary)
 
-    # How is the object being routed?
-    driver.find_element_by_xpath("//input[@value='militaryToUSA']").click()
-    driver.find_element_by_id("submit").click()
+        self.quit_gui()
 
-    # Does the object weigh less than a pound?
-    driver.find_element_by_xpath("//input[@value='0']").click()
-    driver.find_element_by_id("submit").click()
+    def quit_gui(self):
+        self.master.destroy()
 
-    #Sender Zip Code
-    senderZip = parseZipCode(sendingAddress[4])
-    receiverZip = parseZipCode(eachRow[4])
-    driver.find_element_by_id('senderZipCode').send_keys(senderZip)
-
-    #Reciever Zip Code
-    driver.find_element_by_id('recipientZipCode').send_keys(receiverZip)
-    driver.find_element_by_id("submit").click()
-
-    #Shipping non-dangerous items?
-    driver.find_element_by_id("submit").click()
-
-    #Enter package weight
-    myElem = waitForPageLoad(driver, "//input[@id='weightPounds']", delay)
-    driver.find_element_by_id('weightPounds').send_keys(eachRow[6])
-    driver.find_element_by_id('weightOunces').send_keys(eachRow[7])
-    driver.find_element_by_id("submit").click()
-
-    #Select package type for Customs form
-    #Sample xPath query to get the target radio button below
-    #$x("//div[contains(@class, 'note method-note') and (text()='Large Flat Rate Box')]/ancestor::label/input")
-    boxType = eachRow[8]
-    xPathQuery = "//div[contains(@class, 'note method-note') and (text()='" + boxType + "')]/ancestor::label/input\")"
-    driver.find_element_by_xpath("//div[contains(@class, 'note method-note') and (text()='" + boxType + "')]/ancestor::label/input").click()
-    driver.find_element_by_id("submit").click()
-
-    # Add Sender Information here - This should be constant for each run
-
-
-    # Add Recipient Information here - This will be unique for each row in the target senders table
-
-
-    # What should USPS do if the package can't be delivered?
-    # Return to sender
-
-
-    # What category is the contents of the package? Add comments as needed
-
-
-    # Are you a commercial sender?
-
-
-    # Add items to the list of package contents, including:
-    # Description, Quantity, Value, Weight,
-
-
-    # Confirm the AES Export Option
-
-
-    # Print the Customs form and save as a PDF to the target folder
-    # Rename the PDF with some naming logic to help keep the folder organized
+# Start tkinter
+if __name__ == '__main__':
+    app1 = main()

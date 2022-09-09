@@ -1,5 +1,3 @@
 Address Type,Name,Street Address,City,State,Zip Code,Country
-Sender,The Rynes,CMR 489 BOX 159,Stuttgart,AE,“09751”,-
-Receiver,The Dees,5968 Amber Ridge Road,Haymarket,Virginia,"“20169""",USA
-Receiver,Kris Rynes,2375 North Revere Road,Akron,Ohio,“44333”,USA
+Sender,Test Name,Test Address,TestTown,TestState,“01234”,USA
 Receiver,Test Name,Test Address,TestTown,TestState,“01234”,USA
